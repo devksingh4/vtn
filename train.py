@@ -1,7 +1,3 @@
-import os
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,3"
-
 from argparse import ArgumentParser
 import torch
 torch.backends.cudnn.benchmark = True
@@ -26,14 +22,13 @@ parser = ArgumentParser()
 
 parser.add_argument("--annotations", type=str, default="dataset/kinetics-400/annotations.json", help="Dataset labels path")
 parser.add_argument("--val-annotations", type=str, default="dataset/kinetics-400/annotations.json", help="Dataset labels path")
-parser.add_argument("--root-dir", type=str, default="dataset/kinetics-400/train", help="Dataset files root-dir")
-parser.add_argument("--val-root-dir", type=str, default="dataset/kinetics-400/val", help="Dataset files root-dir")
+parser.add_argument("--root-dir", type=str, default="dataset/kinetics-400", help="Dataset files root-dir")
 parser.add_argument("--classes", type=int, default=400, help="Number of classes")
-parser.add_argument("--config", type=str, default='configs/lin-vtn-miil-21k.yaml', help="Config file")
+parser.add_argument("--config", type=str, default='configs/vtn.yaml', help="Config file")
 
 parser.add_argument("--dataset", choices=['ucf', 'smth', 'kinetics'], default='kinetics')
-parser.add_argument("--weight-path", type=str, default="weights/kinetics/miil-21k-lin-v3", help='Path to save weights')
-parser.add_argument("--log-path", type=str, default="log/kinetics/miil-21k-lin-v3", help='Path to save weights')
+parser.add_argument("--weight-path", type=str, default="weights/kinetics-vtn", help='Path to save weights')
+parser.add_argument("--log-path", type=str, default="log/kinetics-vtn", help='Path to save weights')
 parser.add_argument("--resume", type=int, default=0, help='Resume training from')
 
 # Hyperparameters
@@ -75,12 +70,12 @@ elif args.dataset == 'smth':
   train_set = SMTHV2(args.annotations, args.root_dir, preprocess=train_preprocess, frames=cfg.frames)
   val_set = SMTHV2(args.val_annotations, args.root_dir, preprocess=preprocess, frames=cfg.frames)
 elif args.dataset == 'kinetics':
-  train_set = Kinetics400(args.annotations, args.root_dir, preprocess=train_preprocess, frames=cfg.frames)
+  train_set = Kinetics400(args.annotations, args.root_dir, preprocess=train_preprocess, frames=cfg.frames, cfg=cfg, split="train")
   #train_set, val_set = random_split(dataset, [len(dataset) - int(len(dataset) * args.validation_split), int(len(dataset) * args.validation_split)], generator=torch.Generator().manual_seed(12345))
-  val_set = Kinetics400(args.annotations, args.val_root_dir, preprocess=preprocess, frames=cfg.frames)
+  val_set = Kinetics400(args.annotations, args.root_dir, preprocess=preprocess, frames=cfg.frames, cfg=cfg, split="val")
 
 # Split
-train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=16, persistent_workers=True)
+train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, persistent_workers=True)
 val_loader = DataLoader(val_set, batch_size=args.batch_size, num_workers=8, persistent_workers=True)
 
 # Tensorboard 

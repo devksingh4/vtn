@@ -1,7 +1,3 @@
-import os
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1, 2"
-
 import yaml
 from argparse import ArgumentParser, Namespace
 import torch
@@ -23,20 +19,21 @@ from utils import load_yaml
 from einops import rearrange
 import json
 from glob import glob
+import csv 
 
 # Parse arguments
 parser = ArgumentParser()
 
 parser.add_argument("--annotations", type=str, default="dataset/kinetics-400/annotations.json", help="Dataset labels path")
-parser.add_argument("--root-dir", type=str, default="dataset/kinetics-400/val", help="Dataset files root-dir")
+parser.add_argument("--root-dir", type=str, default="dataset/kinetics-400", help="Dataset files root-dir")
 parser.add_argument("--classInd", type=str, default="dataset/ucf/annotation/classInd.txt", help="ClassInd file")
 parser.add_argument("--classes", type=int, default=400, help="Number of classes")
 parser.add_argument("--dataset", choices=['ucf', 'smth', 'kinetics'], default='kinetics', help='Dataset type')
 parser.add_argument("--per_sample", type=int, default=2, help="Clips per sample")
-parser.add_argument("--weight-path", type=str, default="weights/kinetics/lin-v3/weights_20.pth", help='Path to load weights')
+parser.add_argument("--weight-path", type=str, default="weights/kinetics-vtn/weights_25.pth", help='Path to load weights')
 # Hyperparameters
 parser.add_argument("--batch-size", type=int, default=8, help="Batch size")
-parser.add_argument("--config", type=str, default="configs/lin-vtn.yaml", help="Config file")
+parser.add_argument("--config", type=str, default="configs/vtn.yaml", help="Config file")
 
 
 
@@ -125,8 +122,11 @@ elif args.dataset == 'kinetics':
       with open(labels, "r") as f:
         labels = json.load(f)
       
-      files = glob(f"{root_dir}/*/*")
-      self.src = [ (file, labels[file.split('/')[-2]] )  for file in files ]
+      csv_file_name = f"{root_dir}/test.csv"
+      print(f"Reading Kinetics-400 dataset from {csv_file_name}")
+      with open(csv_file_name) as csv_file:
+        csvFile = csv.reader(csv_file, delimiter=',')
+        self.src = list(csvFile)
       self.frames = frames
       self.preprocess = preprocess
       self.per_sample = per_sample
@@ -165,7 +165,7 @@ elif args.dataset == 'kinetics':
             out.append(imgs.unsqueeze(0))
       
       return torch.cat(out), int(label)
-  dataset = Kinetics400(args.annotations, args.root_dir, mean=model.module.spatial_transformer.default_cfg['mean'], std=model.module.spatial_transformer.default_cfg['std'], frames=cfg.frames, per_sample=args.per_sample)
+  dataset = Kinetics400(args.annotations, args.root_dir, mean=model.module.spatial_transformer.default_cfg['mean'], std=model.module.spatial_transformer.default_cfg['std'], frames=cfg.frames, per_sample=args.per_sample, cfg=cfg)
 
 dataloader = DataLoader(dataset, batch_size=args.batch_size, num_workers=10, persistent_workers=True)
 

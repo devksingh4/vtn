@@ -10,6 +10,7 @@ import torchvision
 import fs
 import fs.copy
 import av
+import csv
 
 from joblib import Parallel, delayed
 from tqdm import tqdm
@@ -162,14 +163,14 @@ class SMTHV2(Dataset):
 # Kinetics-400
 class Kinetics400(Dataset):
   
-  def __init__(self, labels, root_dir, preprocess=None, frames=16, per_sample=1):
-    
+  def __init__(self, labels, root_dir, preprocess=None, frames=16, per_sample=1, cfg=None, split="generic"):
+    self.cfg = cfg
     assert per_sample > 0
-    with open(labels, "r") as f:
-      labels = json.load(f)
-    
-    files = glob(f"{root_dir}/*/*")
-    self.src = [ (file, labels[file.split('/')[-2]] )  for file in files ]
+    csv_file_name = f"{root_dir}/{split}.csv"
+    print(f"Reading Kinetics-400 dataset from {csv_file_name}")
+    with open(csv_file_name) as csv_file:
+      csvFile = csv.reader(csv_file, delimiter=',')
+      self.src = list(csvFile)
     self.frames = frames
     self.preprocess = preprocess
     self.per_sample = per_sample
