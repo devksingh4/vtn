@@ -189,7 +189,11 @@ class Kinetics400(Dataset):
     imgs = read_video(id, self.frames)
 
     if self.preprocess is not None:
-      imgs = list(map(lambda img: self.preprocess(img).unsqueeze(0), imgs))
-      imgs = torch.cat(imgs)
+      try:
+        imgs = list(map(lambda img: self.preprocess(img).unsqueeze(0), imgs))
+        imgs = torch.cat(imgs)
+      except:
+        print("ERROR ON: ", id, label, imgs)
+        raise ValueError("ERROR ON: ", id, label, imgs)
 
     return imgs, int(label)

@@ -20,6 +20,7 @@ from einops import rearrange
 import json
 from glob import glob
 import csv 
+from torchvision.transforms import InterpolationMode
 
 # Parse arguments
 parser = ArgumentParser()
@@ -131,7 +132,7 @@ elif args.dataset == 'kinetics':
       self.preprocess = preprocess
       self.per_sample = per_sample
 
-      self.resize = transforms.Resize(256)
+      self.resize = transforms.Resize((256, 256), interpolation=InterpolationMode.BILINEAR)
       self.three_crop = transforms.Compose([
         transforms.FiveCrop(224),
         transforms.Lambda(lambda crops: [ crop for i, crop in enumerate(crops) if i in [0, 3, 4] ])

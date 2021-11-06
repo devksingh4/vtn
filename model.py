@@ -12,6 +12,7 @@ from transformer import Transformer
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 from torchvision import transforms
+from torchvision.transforms import InterpolationMode
 
 class VTN(nn.Module):
     def __init__(self, *, frames, num_classes, img_size, patch_size, spatial_frozen, spatial_size, spatial_args, temporal_type, temporal_args, spatial_suffix=''):
@@ -33,7 +34,7 @@ class VTN(nn.Module):
           self.spatial_transformer.eval()
         # Spatial preprocess
         self.preprocess = transforms.Compose([
-          transforms.Resize(256),
+          transforms.Resize((256, 256), interpolation=InterpolationMode.BILINEAR),
           transforms.RandomCrop(img_size),
           #transforms.RandomHorizontalFlip(),
           transforms.ToTensor(),
